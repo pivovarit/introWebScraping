@@ -17,7 +17,6 @@ import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
 import com.gargoylesoftware.htmlunit.html.HtmlPage;
 import com.gargoylesoftware.htmlunit.html.HtmlTable;
 import com.gargoylesoftware.htmlunit.html.HtmlTableRow;
-import com.gargoylesoftware.htmlunit.javascript.host.URL;
 
 import blog.article2.Authenticator;
 
@@ -31,21 +30,21 @@ public class BillDownloader {
 			WebClient client = Authenticator.autoLogin(baseUrl + "/login", login, password);
 			
 			HtmlPage page = client.getPage("https://cloud.digitalocean.com/settings/billing");
-			if(page.asText().contains("You need to sign in for access to this page")){
+			if(page.asNormalizedText().contains("You need to sign in for access to this page")){
 				throw new Exception(String.format("Error during login on %s , check your credentials", baseUrl));
 			}
 			List<Bill> bills = new ArrayList<Bill>();
 			HtmlTable billsTable = (HtmlTable) page.getFirstByXPath("//table[@class='listing Billing--history']");
 			for(HtmlTableRow row : billsTable.getBodies().get(0).getRows()){
 				
-				String label = row.getCell(1).asText();
+				String label = row.getCell(1).asNormalizedText();
 				// We only want the invoice row, not the payment one
 				if(!label.contains("Invoice")){
 					continue ;
 				}
 				
-				Date date = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).parse(row.getCell(0).asText());
-				BigDecimal amount =new BigDecimal(row.getCell(2).asText().replace("$", ""));
+				Date date = new SimpleDateFormat("MMMM d, yyyy", Locale.ENGLISH).parse(row.getCell(0).asNormalizedText());
+				BigDecimal amount =new BigDecimal(row.getCell(2).asNormalizedText().replace("$", ""));
 				String url = ((HtmlAnchor) row.getCell(3).getFirstChild()).getHrefAttribute();
 				
 				Bill bill = new Bill(label, amount, date, url);

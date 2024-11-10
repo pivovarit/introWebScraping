@@ -1,0 +1,52 @@
+package blog.article1.e2_json;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+
+import java.io.IOException;
+import java.math.BigDecimal;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
+class E2_ResultsAsJson {
+
+    private final static ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
+    public static void main(String[] args) throws IOException {
+        var searchQuery = "iphone 13";
+        var searchUrl = "https://newyork.craigslist.org/search/moa?query=%s".formatted(URLEncoder.encode(searchQuery, StandardCharsets.UTF_8));
+
+        System.out.println("searchUrl = " + searchUrl);
+
+        try (var client = new WebClient()) {
+            client.getOptions().setCssEnabled(false);
+            client.getOptions().setJavaScriptEnabled(false);
+            client.getOptions().setThrowExceptionOnFailingStatusCode(false);
+            client.getOptions().setThrowExceptionOnScriptError(false);
+
+            HtmlPage page = client.getPage(searchUrl);
+            for (var htmlItem : page.<HtmlElement>getByXPath("//li[contains(@class,'cl-static-search-result')]")) {
+                HtmlAnchor itemAnchor = htmlItem.getFirstByXPath(".//a");
+                HtmlElement itemTitle = htmlItem.getFirstByXPath(".//div[@class='title']");
+                HtmlElement itemPrice = htmlItem.getFirstByXPath(".//div[@class='price']");
+                HtmlElement itemLocation = htmlItem.getFirstByXPath(".//div[@class='location']");
+
+                if (itemAnchor != null && itemTitle != null) {
+                    var itemName = itemTitle.asNormalizedText();
+                    var itemUrl = itemAnchor.getHrefAttribute();
+                    var itemPriceText = itemPrice.asNormalizedText();
+                    var itemLocationText = (itemLocation == null) ? "N/A" : itemLocation.asNormalizedText();
+
+                    var item = new Item(itemName, new BigDecimal(itemPriceText.replace("$", "").replace(",", ".")), itemLocationText, itemUrl);
+                    System.out.println("item = " + OBJECT_MAPPER.writeValueAsString(item));
+                }
+            }
+        }
+    }
+
+    record Item(String title, BigDecimal price, String location, String url) {
+    }
+}

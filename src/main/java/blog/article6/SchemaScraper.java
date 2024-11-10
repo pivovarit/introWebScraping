@@ -5,7 +5,6 @@ import java.math.BigDecimal;
 import java.net.MalformedURLException;
 import java.net.URL;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
 import com.gargoylesoftware.htmlunit.WebClient;
@@ -14,7 +13,7 @@ import com.gargoylesoftware.htmlunit.html.HtmlPage;
 
 
 public class SchemaScraper {
-	public static void main(String[] args) throws FailingHttpStatusCodeException, MalformedURLException, IOException {
+	public static void main(String[] args) throws FailingHttpStatusCodeException, IOException {
 		WebClient client = new WebClient();
 		client.getOptions().setCssEnabled(false);
 		client.getOptions().setJavaScriptEnabled(false);
@@ -27,10 +26,10 @@ public class SchemaScraper {
 				.getAttribute("src"));
 		HtmlElement offers = ((HtmlElement) productNode.getFirstByXPath("./span[@itemprop='offers']"));
 		
-		BigDecimal price = new BigDecimal(((HtmlElement) offers.getFirstByXPath("./span[@itemprop='price']")).asText());
-		String productName = (((HtmlElement) productNode.getFirstByXPath("./span[@itemprop='name']")).asText());
+		BigDecimal price = new BigDecimal(((HtmlElement) offers.getFirstByXPath("./span[@itemprop='price']")).asNormalizedText());
+		String productName = (((HtmlElement) productNode.getFirstByXPath("./span[@itemprop='name']")).asNormalizedText());
 		String currency = (((HtmlElement) offers.getFirstByXPath("./*[@itemprop='priceCurrency']")).getAttribute("content"));
-		String productSKU = (((HtmlElement) productNode.getFirstByXPath("./span[@itemprop='sku']")).asText());
+		String productSKU = (((HtmlElement) productNode.getFirstByXPath("./span[@itemprop='sku']")).asNormalizedText());
 		
 		Product product = new Product(price, productName, productSKU, imageUrl, currency);
 		ObjectMapper mapper = new ObjectMapper();
